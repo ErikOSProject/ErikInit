@@ -50,10 +50,7 @@ int64_t write(char *str)
 		bus_interface_fi_erikinkinen_kernel_fi_erikinkinen_kernel_Stdio(),
 		bus_method_fi_erikinkinen_kernel_fi_erikinkinen_kernel_Stdio_Write()
 	};
-	struct syscall_param p = { .type = SYSCALL_PARAM_ARRAY,
-				   .size = strlen(str),
-				   .array = (void *)str };
-	_syscall(SYSCALL_PUSH, &p);
+	_syscall_push_string(str);
 	return _syscall(SYSCALL_METHOD, &m);
 }
 
@@ -61,16 +58,15 @@ void service_handler(uint64_t interface, uint64_t method)
 {
 	char buf[0x100];
 	if (interface == 0 && method == 0) {
-		struct syscall_param p;
-		_syscall(SYSCALL_PEEK, &p);
-		if (p.type == SYSCALL_PARAM_ARRAY && p.size < 0x100) {
-			p.array = buf;
-			_syscall(SYSCALL_POP, &p);
+		char *str;
+		_syscall_pop_string(&str);
+		if (str) {
 			write("Received: ");
-			write(buf);
+			write(str);
 		} else {
 			write("Invalid parameter\n");
 		}
+		free(str);
 	} else {
 		write("Invalid method or inteface\n");
 	}
@@ -82,10 +78,7 @@ int main(void)
 	int64_t id = register_service("fi.erikinkinen.init");
 	char *msg = "Hello from init\n";
 	struct syscall_method_data m = { id, 0, 0 };
-	struct syscall_param p = { .type = SYSCALL_PARAM_ARRAY,
-				   .size = strlen(msg),
-				   .array = (void *)msg };
-	_syscall(SYSCALL_PUSH, &p);
+	_syscall_push_string(msg);
 	_syscall(SYSCALL_METHOD, &m);
 	for (;;)
 		;
