@@ -34,3 +34,5 @@ target_link_options(init PRIVATE
     -nostdlib)
 
 target_link_libraries(init PRIVATE c erikbus)
+
+install(TARGETS init)
